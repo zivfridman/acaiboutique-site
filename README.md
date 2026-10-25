@@ -16,7 +16,7 @@ site/              the published website
 
 To publish immediately, use one of these:
 
-- `netlify build --trigger` from this folder (needs the Netlify CLI and `netlify login`)
+- `netlify deploy --trigger` from this folder (needs the Netlify CLI and `netlify login`). Note: `netlify build` only builds locally and has no `--trigger` flag.
 - POST to the build hook URL: `curl -X POST -d '{}' <hook URL>`. The URL is in Netlify → Project configuration → Build & deploy → Build hooks.
 - GitHub → Actions → "Rebuild site from Soro" → Run workflow
 
