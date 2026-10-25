@@ -1,0 +1,14 @@
+{
+  "name": "Acai Boutique – עמדת אסאי לאירועים",
+  "short_name": "Acai Boutique",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#FFFFFF",
+  "theme_color": "#2F184E",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png"}
+  ]
+}

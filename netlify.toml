@@ -1,0 +1,6 @@
+[build]
+  command = "node build-blog.js"
+  publish = "site"
+
+[build.environment]
+  NODE_VERSION = "22"

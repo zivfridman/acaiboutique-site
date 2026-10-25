@@ -1,0 +1,17 @@
+name: Rebuild site from Soro
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  trigger-netlify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST to Netlify build hook
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "NETLIFY_BUILD_HOOK secret is not set"; exit 1; fi
+          curl -fsS -X POST -d '{}' "$HOOK"
