@@ -1,41 +1,50 @@
-# acaiboutique.co.il – static blog build
+# acaiboutique.co.il
 
-The blog posts are written in Soro, but the live site serves them as static pages so Google can index them:
-
-- `blog.html` – the `/blog` index, with every post linked in plain HTML
-- `blog/<slug>/index.html` – one page per post, served at `/blog/<slug>/`
-- `sitemap.xml` – the 7 site pages plus every post
-- `_redirects` – 301s from the old widget URLs (`/blog?post=<slug>`) to the new pages
-
-All of these are produced by `build-blog.js`. Don't edit them by hand.
-
-## After publishing a new post in Soro
-
-Requires Node.js 18 or newer.
+Static site for acaiboutique.co.il, hosted on Netlify (project `harmonious-mooncake-5a2de0`). Netlify deploys automatically from the GitHub repo `acaiboutique-site`.
 
 ```
-cd site
-node build-blog.js
+build-blog.js      builds the blog from Soro (Netlify runs it on every deploy)
+data/posts.json    last good copy of the Soro posts (fallback if Soro is down)
+netlify.toml       build command + publish dir (site/)
+site/              the published website
+.github/workflows/rebuild.yml   triggers a Netlify rebuild every 6 hours
 ```
 
-The script:
+## Publishing a blog post
 
-1. Fetches the Soro embed script and each article's content, then saves the result to `data/posts.json`.
-2. Deletes and regenerates `blog/`, rewrites `blog.html` and `sitemap.xml`, and replaces only the generated block in `_redirects`. Any rules you add outside that block are kept.
-3. Runs the checks: title, canonical URL, exactly one h1, word count, valid JSON-LD, internal links and anchors, and external URLs. It exits with a non-zero code if anything fails.
+**Publish it in Soro. That's all.** The site rebuilds automatically every 6 hours and picks up new or edited posts. A GitHub Action calls the Netlify build hook `soro-sync`.
 
-Then drag the whole `site` folder onto Netlify (Deploys → drag & drop).
+To publish immediately, use one of these:
 
-Other modes:
+- `netlify build --trigger` from this folder (needs the Netlify CLI and `netlify login`)
+- POST to the build hook URL: `curl -X POST -d '{}' <hook URL>`. The URL is in Netlify → Project configuration → Build & deploy → Build hooks.
+- GitHub → Actions → "Rebuild site from Soro" → Run workflow
 
-- `node build-blog.js --offline` rebuilds from the saved `data/posts.json` without contacting Soro. Use it after changing the template or the script.
-- `node build-blog.js --verify` runs only the checks.
-- `--no-external` skips the external URL check.
+## What a build does
 
-## Notes
+`node build-blog.js` runs these steps:
 
-- **Design.** The header, nav, styles, gtag, final CTA, footer and Organization JSON-LD are copied from `blog.html` on every run. To change the design, edit those parts of `blog.html` (they are preserved), then run `--offline`. Blog-only CSS lives in `BLOG_CSS` inside `build-blog.js`.
-- **Hebrew slugs.** These are kept as real Hebrew folder names. URLs in the canonical tag, sitemap and links are percent-encoded.
-- **Pagination.** It starts automatically above 48 posts (`PAGE_SIZE`), producing `/blog/page/2/` and so on.
-- **Deleted posts.** A post deleted in Soro disappears on the next build. Its old `?post=` URL then gets no redirect.
-- **Featured images.** These stay on Soro's Supabase storage. If Soro removes them, they break on the site too.
+1. Fetches every post live from the Soro embed endpoint. If Soro is unreachable or returns no posts, it falls back to `data/posts.json`.
+2. Rebuilds `site/blog/<slug>/` (one page per post), `site/blog.html` (the index), `site/sitemap.xml`, and the generated block in `site/_redirects`. That block holds the 301s from the old `/blog?post=<slug>` URLs.
+3. Checks every page: one h1, canonical URL, valid JSON-LD, and no broken internal links. If any check fails, or there's no data at all, the build exits non-zero. Netlify then keeps the previous deploy live.
+
+`data/posts.json` is only refreshed when you build locally and commit it. To refresh the fallback copy, run `node build-blog.js` and commit `data/posts.json`.
+
+Local options:
+
+- `--offline` builds from `data/posts.json` without contacting Soro
+- `--verify` runs only the checks
+- `--no-external` skips the external-link check (failures there only warn on Netlify)
+
+## Editing
+
+- **Site pages** (`site/index.html`, `site/weddings.html`, …): edit them, commit, push. Netlify deploys on push.
+- **Blog design:** the header, nav, styles, footer and CTA are copied from `site/blog.html` on each build, so edit them there. Blog-only CSS is `BLOG_CSS` in `build-blog.js`.
+- **Slug changes:** to rename a post URL without editing it in Soro, add it to `SLUG_OVERRIDES` in `build-blog.js`. The old URL gets a 301 automatically. Current override: `duchan-acai-leirועים` → `duchan-acai-leiruim`.
+- **Your own redirects:** add them to `site/_redirects` outside the `# BEGIN blog` / `# END blog` block.
+
+## Caveats
+
+- GitHub pauses scheduled workflows after 60 days with no commits in the repo. If that happens, GitHub emails you; re-enable it under the Actions tab.
+- Featured images are hosted on Soro's Supabase storage.
+- Posts deleted in Soro disappear on the next build. Their old `?post=` URLs then get no redirect.
